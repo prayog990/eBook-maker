@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ई-बुक मेकर</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📖%3C/text%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Hind:wght@500;600;700&family=Mukta:wght@500;600;700&family=Noto+Sans+Devanagari:wght@500;600;700&family=Tiro+Devanagari+Hindi&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--bg:#f4efe6;--card:#fffaf0;--ink:#2b2118;--mute:#7a6a55;--line:#d8c9aa;--acc:#7a2e1d;--accink:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1812;--card:#2a241b;--ink:#efe5d2;--mute:#b3a58c;--line:#4a3f2d;--acc:#e0a45a;--accink:#1c1812}}
+:root[data-theme="dark"]{--bg:#1c1812;--card:#2a241b;--ink:#efe5d2;--mute:#b3a58c;--line:#4a3f2d;--acc:#e0a45a;--accink:#1c1812}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Hind','Noto Sans Devanagari',system-ui,sans-serif;font-size:16px}
+.wrap{max-width:640px;margin:0 auto;padding:16px 12px 40px}
+h1{font-size:22px;margin:4px 0 12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px}
+textarea,input[type=text],select{width:100%;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px;font:inherit;font-size:15px}
+textarea{min-height:150px;resize:vertical}
+#cn{min-height:72px}
+label{display:block;font-size:14px;color:var(--mute);margin:10px 0 4px}
+.row{display:flex;gap:10px;align-items:center}
+.row input[type=range]{flex:1;accent-color:var(--acc)}
+.val{min-width:44px;text-align:right;font-weight:600}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+button{font:inherit;font-weight:600;font-size:15px;padding:10px 14px;border-radius:8px;border:1px solid var(--acc);background:transparent;color:var(--acc);cursor:pointer}
+button.main{background:var(--acc);color:var(--accink)}
+button:disabled{opacity:.5}
+button:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+#st{font-size:14px;color:var(--mute);margin-top:8px;min-height:20px}
+#stage{display:flex;flex-direction:column;align-items:center;gap:16px}
+.empty{color:var(--mute);text-align:center;padding:30px 10px}
+.sheet{box-shadow:0 4px 18px rgba(0,0,0,.35);flex:none}
+.pw{display:flex;flex-direction:column;align-items:center;gap:6px}.pc{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;font-size:14px;color:var(--mute)}.pc button{padding:4px 12px;font-size:15px}.pc .pv{min-width:40px;text-align:center;font-weight:600;color:var(--ink)}.pc .pv.o{color:var(--acc)}
+input[type=file]{font:inherit;font-size:14px;max-width:100%;color:var(--ink)}
+input[type=color]{width:56px;height:38px;padding:2px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.cvw{position:absolute;inset:48px 46px 52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center}
+.ci{width:100%;height:410px;border:3px double #b08d4c;background-size:cover;background-position:center;flex:none;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.ct{color:#7a2e1d;font-weight:700;line-height:1.35;max-width:100%;white-space:pre-line}
+.cu{color:#6b5a3e;font-size:19px;font-weight:600}
+/* ---- book page ---- */
+.page{--fs:17px;--lh:1.62;--ff:'Hind';--fw:500;--fwn:600;--mx:44px;position:relative;width:520px;height:740px;transform-origin:top left;background:radial-gradient(ellipse at center,#fcf3dc 0%,#f4e4bc 70%,#ecd6a4 100%);border:3px double #b08d4c;color:#2b2118;font-family:var(--ff),'Noto Sans Devanagari',sans-serif;overflow:hidden}
+.page::before{content:"";position:absolute;inset:12px;border:1px solid #c9a96a;pointer-events:none}
+.page i{position:absolute;width:26px;height:26px;border:3px solid #b08d4c;pointer-events:none}
+.page i.a{top:7px;left:7px;border-width:3px 0 0 3px;border-radius:14px 0 0 0}
+.page i.b{top:7px;right:7px;border-width:3px 3px 0 0;border-radius:0 14px 0 0}
+.page i.c{bottom:7px;left:7px;border-width:0 0 3px 3px;border-radius:0 0 0 14px}
+.page i.d{bottom:7px;right:7px;border-width:0 3px 3px 0;border-radius:0 0 14px 0}
+.hd,.ft{position:absolute;left:0;right:0;text-align:center;color:#a58656;font-size:14px;font-weight:600}
+.hd{top:22px}.ft{bottom:20px}
+.bd{position:absolute;left:var(--mx);right:var(--mx);top:52px;bottom:54px;overflow:hidden;font-size:var(--fs);line-height:var(--lh);font-weight:var(--fw);text-align:justify}
+.bd p{margin:0 0 .7em}
+.bd p.cn{margin-bottom:0}
+.bd p.k{margin-top:0}
+.bd b{font-weight:700}
+.bd b.cap{display:inline-block;white-space:nowrap;padding:0 .7em;border-radius:999px;color:#fff;font-size:.82em;line-height:1.55;margin-right:.1em;text-align:left;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.bd p.n{color:var(--nc,#1d6a2b);font-weight:var(--fwn);white-space:pre-line}
+.bd p.n .nt{color:var(--nt,#1d6a2b)}
+.bd .h{text-align:center;color:#7a2e1d;font-weight:700;font-size:1.25em;line-height:1.4;margin:0 0 .8em}
+.bd .dv{height:1px;margin:.5em 8% .8em;background:linear-gradient(90deg,transparent,#b08d4c,transparent)}
+@media print{
+ body{background:none}.ui,.pc{display:none!important}
+ @page{size:520px 740px;margin:0}
+ .wrap{padding:0;max-width:none}#stage{gap:0;display:block}
+ .sheet{width:520px!important;height:740px!important;box-shadow:none;break-after:page}
+ .page{transform:none!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+ <div class="ui">
+  <h1>📖 ई-बुक मेकर</h1>
+  <div class="card">
+   <label for="ta" style="margin-top:0">अपना टेक्स्ट यहाँ पेस्ट करें</label>
+   <textarea id="ta" placeholder="पहली लाइन: Book name/title - किताब का नाम&#10;&#10;नाम: बातचीत…&#10;&#10;(सरलीकरण :- सरल अर्थ…)"></textarea>
+   <label style="display:flex;align-items:center;gap:8px;color:var(--ink);font-weight:600;margin-top:14px"><input id="cvr" type="checkbox" checked style="width:20px;height:20px;accent-color:var(--acc)"> कवर पेज जोड़ें</label>
+   <label for="cn">किताब का नाम</label>
+   <textarea id="cn" rows="2" placeholder="खाली रखें तो पहली लाइन का नाम लगेगा। Enter दबाकर नई लाइन बनाएँ"></textarea>
+   <label for="cs">उप-शीर्ष / लेखक (वैकल्पिक)</label>
+   <input id="cs" type="text">
+   <label for="cp">कवर फोटो</label>
+   <div class="row"><input id="cp" type="file" accept="image/*"><button id="cx" hidden>हटाएँ</button></div>
+   <label for="fs">फ़ॉन्ट साइज़</label>
+   <div class="row"><button id="fm" aria-label="घटाएँ">A−</button><input id="fs" type="range" min="11" max="28" step="1" value="17"><button id="fp" aria-label="बढ़ाएँ">A+</button><span class="val" id="fv">17</span></div>
+   <label for="ff">फ़ॉन्ट स्टाइल</label>
+   <select id="ff"><option value="Hind">Hind (सादा)</option><option value="Mukta">Mukta (मुलायम)</option><option value="Noto Sans Devanagari">Noto Sans</option><option value="Tiro Devanagari Hindi">Tiro (किताबी / Serif)</option><option value="Kalam">Kalam (हस्तलिखित)</option></select>
+   <label for="ls">लाइन स्पेसिंग</label>
+   <div class="row"><input id="ls" type="range" min="1.3" max="2.2" step="0.05" value="1.62"><span class="val" id="lv">1.62</span></div>
+   <label for="mg">दाएँ-बाएँ खाली जगह (मार्जिन)</label>
+   <div class="row"><input id="mg" type="range" min="20" max="90" step="2" value="44"><span class="val" id="mgv">44</span></div>
+   <label style="display:flex;align-items:center;gap:8px;color:var(--ink);font-weight:600"><input id="bo" type="checkbox" style="width:20px;height:20px;accent-color:var(--acc)"> बोल्ड टेक्स्ट</label>
+   <label for="hd">पेज के ऊपर का शीर्षक</label>
+   <input id="hd" type="text" value="संवाद">
+   <label for="nl">हरे हिस्से का शीर्षक (सरलीकरण / भावार्थ की जगह)</label>
+   <input id="nl" type="text" value="सरल भाषा में अनुवाद">
+   <label for="bk">काले रंग वाले वक्ता (अल्पविराम से अलग करें)</label>
+   <input id="bk" type="text" value="नंदी, nandi">
+   <label for="nc">हरे हिस्से का रंग</label>
+   <div class="row"><input id="nc" type="color" value="#1d6a2b"></div>
+   <label for="nt">हरे हिस्से के शीर्षक का रंग</label>
+   <div class="row"><input id="nt" type="color" value="#1d6a2b"><button id="ntr">हरे हिस्से जैसा</button></div>
+   <div class="btns">
+    <button class="main" id="mk">किताब बनाएँ</button>
+    <button id="pdf" hidden>PDF डाउनलोड</button>
+    <button id="htm" hidden>HTML ई-बुक</button>
+    <button id="ra">पेज-वार बदलाव रीसेट</button>
+    <button id="clr">सब साफ़ करें</button>
+    <button id="prt" hidden>प्रिंट / PDF सेव</button>
+   </div>
+   <div id="st" role="status"></div>
+  </div>
+ </div>
+ <div id="stage"></div>
+</div>
+<script>
+const W=520,H=740,PAL=['#6b2d8f','#1c3f94','#a1262b','#0b6a8a','#b35a00','#b0006d','#7a4a12','#4b4b9e'];
+const $=id=>document.getElementById(id), ta=$('ta'), fs=$('fs'), stage=$('stage'), st=$('st');
+const dev=n=>String(n).replace(/\d/g,d=>'०१२३४५६७८९'[d]);
+let bd,pageEl,count,scale=1,DL=null,img='';const PO={};const PM={};
+
+function isBlack(l){l=l.toLowerCase();return $('bk').value.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean).some(s=>l.includes(s))}
+const NS=/\((सरलीकरण|भावार्थ|सरल भाषा में अनुवाद|सरल अनुवाद|अनुवाद)/;
+function scan(s,d){for(let i=0;i<s.length;i++){const c=s[i];if(c==='(')d++;else if(c===')'){d--;if(d<=0)return[i,0]}}return[-1,d]}
+function lbl(s){const m=s.match(/^([^:：।]{1,40}?)\s*[:：]/);return m&&m[1].trim().split(/\s+/).length<=5&&!/^\(/.test(m[1])?m[1].trim():''}
+function segs(t){
+  const out=[],seen=new Set();let note=null,d=0;
+  const norm=line=>{
+    line=line.trim();if(!line)return;
+    const i=line.search(NS);
+    if(i<0){const l=lbl(line);if(l)seen.add(l);out.push({s:line});return}
+    const pre=line.slice(0,i).trim();if(pre)norm(pre);
+    const rest=line.slice(i),[e,dd]=scan(rest,0);
+    if(e<0){note=rest;d=dd;return}
+    out.push({n:1,s:rest.slice(0,e+1)});
+    norm(rest.slice(e+1));
+  };
+  t.split('\n').forEach(raw=>{
+    const line=raw.trim();
+    if(note!==null){
+      if(!line){note+='\n';return}
+      const l=lbl(line);
+      if(l&&seen.has(l)){out.push({n:1,s:note});note=null;norm(line);return}
+      const [e,dd]=scan(line,d);
+      if(e<0){note+='\n'+line;d=dd;return}
+      out.push({n:1,s:note+'\n'+line.slice(0,e+1)});note=null;
+      norm(line.slice(e+1));return;
+    }
+    norm(line);
+  });
+  if(note!==null)out.push({n:1,s:note});
+  return out;
+}
+function parse(t){
+  t=t.replace(/\r/g,'').trim();
+  let title='';
+  t=t.replace(/^\s*Book name\/title\s*[-–—:]\s*(.+)\n?/i,(m,a)=>{title=a.trim();return''});
+  const out=[],spk={};let ci=0,last={txt:''};
+  if(title)out.push({k:'h',words:title.split(/\s+/)});
+  segs(t).forEach(sg=>{let par=sg.n?'':sg.s;
+    let note=sg.n?sg.s:'';
+    /* note handled in segs() */
+    if(par){
+      let label='',color='',m=par.match(/^([^:：।]{1,40}?)\s*[:：]\s*([\s\S]*)$/);
+      if(m&&m[1].trim().split(/\s+/).length<=5&&!/^\(/.test(m[1])){
+        label=m[1].trim();par=m[2];
+        if(!(label in spk))spk[label]=ci++;
+        color=spk[label]<PAL.length?PAL[spk[label]]:'hsl('+(spk[label]*137%360)+' 65% 32%)';last={txt:isBlack(label)?'':color};
+      }
+      out.push({k:'p',label,color,txt:last.txt,words:par.split(/\s+/).filter(Boolean)});
+    }
+    if(note){const nl=$('nl').value.trim();if(nl)note=note.replace(/^\((सरलीकरण|भावार्थ|सरल भाषा में अनुवाद|सरल अनुवाद|अनुवाद)\s*[:：]?\s*-?\s*/,'('+nl+': ');const lm=note.match(/^\([^:：\n)]{1,40}[:：]-?/);out.push({k:'n',lab:lm?lm[0]:'',words:note.replace(/[ \t]*\n[ \t]*/g,' \n ').trim().split(/ +/)});out.push({k:'d'})}
+  });
+  return out;
+}
+
+const KEY='ebook-maker-v1';let keepY=null,wiped=false;
+function save(){
+  if(wiped)return;
+  try{
+    const s={ta:ta.value,fs:fs.value,ls:$('ls').value,mg:$('mg').value,bo:$('bo').checked,ff:$('ff').value,hd:$('hd').value,nl:$('nl').value,bk:$('bk').value,nc:$('nc').value,nt:$('nt').value,nts:!!$('nt').dataset.s,cvr:$('cvr').checked,cn:$('cn').value,cs:$('cs').value,PO,PM,y:keepY!==null?keepY:scrollY};
+    try{localStorage.setItem(KEY,JSON.stringify({...s,img}))}catch(e){localStorage.setItem(KEY,JSON.stringify(s))}
+  }catch(e){}
+}
+function load(){
+  try{
+    const s=JSON.parse(localStorage.getItem(KEY)||'null');if(!s)return 0;
+    const set=(id,v)=>{if(v!==undefined&&v!==null)$(id).value=v};
+    set('ta',s.ta);set('fs',s.fs);set('fv',null);$('fv').textContent=fs.value;
+    set('ls',s.ls);$('lv').textContent=$('ls').value;set('mg',s.mg);$('mgv').textContent=$('mg').value;
+    $('bo').checked=!!s.bo;set('ff',s.ff);set('hd',s.hd);set('nl',s.nl);set('bk',s.bk);set('nc',s.nc);set('nt',s.nt);
+    if(s.nts)$('nt').dataset.s=1;
+    $('cvr').checked=s.cvr!==false;set('cn',s.cn);set('cs',s.cs);
+    Object.assign(PO,s.PO||{});Object.assign(PM,s.PM||{});
+    if(s.img){img=s.img;$('cx').hidden=false}
+    return s.y||0;
+  }catch(e){return 0}
+}
+function newPage(){
+  const sh=document.createElement('div');sh.className='sheet';
+  const p=document.createElement('div');p.className='page';
+  p.style.setProperty('--fs',fs.value+'px');
+  p.style.setProperty('--lh',PO[count+1]??$('ls').value);
+  p.style.setProperty('--mx',(PM[count+1]??+$('mg').value)+'px');
+  p.style.setProperty('--nc',$('nc').value);
+  p.style.setProperty('--nt',$('nt').dataset.s?$('nt').value:$('nc').value);
+  p.style.setProperty('--ff',"'"+$('ff').value+"'");
+  const bo=$('bo').checked;p.style.setProperty('--fw',bo?700:500);p.style.setProperty('--fwn',bo?700:600);
+  p.innerHTML='<i class="a"></i><i class="b"></i><i class="c"></i><i class="d"></i><div class="hd"></div><div class="bd"></div><div class="ft"></div>';
+  p.querySelector('.hd').textContent=$('hd').value.trim()?'॥ '+$('hd').value.trim()+' ॥':'';
+  count++;p.querySelector('.ft').textContent='॥ '+dev(count)+' ॥';
+  sh.append(p);
+  const idx=count,pw=document.createElement('div'),bar=document.createElement('div');
+  pw.className='pw';bar.className='pc';
+  const set=v=>{if(v===null)delete PO[idx];else PO[idx]=Math.round(Math.min(2.4,Math.max(1.2,v))*100)/100;render()};
+  const cur=PO[idx]??+$('ls').value;
+  const mkb=(t,f,l)=>{const b=document.createElement('button');b.textContent=t;b.setAttribute('aria-label',l);b.onclick=f;return b};
+  const pv=document.createElement('span');pv.className='pv'+(idx in PO?' o':'');pv.textContent=cur.toFixed(2);
+  bar.append('पेज '+dev(idx)+' · स्पेसिंग ',mkb('−',()=>set(cur-.05),'घटाएँ'),pv,mkb('+',()=>set(cur+.05),'बढ़ाएँ'),mkb('↺',()=>set(null),'रीसेट'));
+  const mcur=PM[idx]??+$('mg').value;
+  const mv=document.createElement('span');mv.className='pv'+(idx in PM?' o':'');mv.textContent=mcur;
+  const mset=v=>{if(v===null)delete PM[idx];else PM[idx]=Math.min(90,Math.max(20,v));render()};
+  bar.append(' · मार्जिन ',mkb('−',()=>mset(mcur-4),'घटाएँ'),mv,mkb('+',()=>mset(mcur+4),'बढ़ाएँ'),mkb('↺',()=>mset(null),'रीसेट'));
+  pw.append(sh,bar);stage.append(pw);
+  pageEl=p;bd=p.querySelector('.bd');
+}
+const over=()=>bd.scrollHeight>bd.clientHeight+1;
+
+function mk(b,words,first,cont){
+  const el=document.createElement(b.k==='h'?'div':'p');
+  el.className=b.k==='h'?'h':(b.k==='n'?'n':'')+(cont?' cn':'')+(first?'':' k');
+  if(b.k==='p'&&b.txt)el.style.color=b.txt;
+  if(b.k==='p'&&first&&b.label){
+    const s=document.createElement('b');s.className='cap';s.textContent=b.label;s.style.background=b.color;
+    el.append(s,' ');
+  }
+  {const tx=b.k==='n'?words.join(' ').replace(/ ?\n ?/g,'\n'):words.join(' ');
+  if(b.k==='n'&&first&&b.lab&&tx.startsWith(b.lab)){const s=document.createElement('span');s.className='nt';s.textContent=b.lab;el.append(s,tx.slice(b.lab.length))}else el.append(tx)}
+  return el;
+}
+
+function place(b){
+  if(b.k==='d'){
+    const d=document.createElement('div');d.className='dv';bd.append(d);
+    if(over())d.remove();
+    return;
+  }
+  let words=b.words,first=true;
+  if(b.k==='n'){const pv=bd.lastElementChild;if(pv&&pv.tagName==='P')pv.style.marginBottom='0'}
+  while(words.length){
+    let el=mk(b,words,first,false);bd.append(el);
+    if(!over())return;
+    el.remove();
+    let lo=0,hi=words.length-1;
+    while(lo<hi){
+      const m=(lo+hi+1)>>1;
+      el=mk(b,words.slice(0,m),first,true);bd.append(el);
+      const o=over();el.remove();
+      if(o)hi=m-1;else lo=m;
+    }
+    if(lo===0){
+      if(bd.children.length){newPage();continue}
+      lo=Math.min(words.length,8);
+    }
+    bd.append(mk(b,words.slice(0,lo),first,true));
+    words=words.slice(lo);first=false;while(words[0]==='\n')words.shift();
+    if(words.length)newPage();
+  }
+}
+
+function addCover(nm){
+  const sh=document.createElement('div');sh.className='sheet';
+  const p=document.createElement('div');p.className='page cover';
+  p.style.setProperty('--ff',"'"+$('ff').value+"'");
+  p.innerHTML='<i class="a"></i><i class="b"></i><i class="c"></i><i class="d"></i><div class="cvw"></div>';
+  const w=p.querySelector('.cvw');
+  if(img){const d=document.createElement('div');d.className='ci';d.style.backgroundImage='url("'+img+'")';w.append(d)}
+  if(nm){const t=document.createElement('div');t.className='ct';t.textContent=nm;t.style.fontSize=((L)=>img?(L>40?24:30):(L>40?32:42))(Math.max(...nm.split('\n').map(l=>l.length)))+'px';w.append(t)}
+  const s=$('cs').value.trim();
+  if(s){const u=document.createElement('div');u.className='cu';u.textContent=s;w.append(u)}
+  sh.append(p);stage.append(sh);
+}
+function render(){
+  save();const y=scrollY;stage.innerHTML='';count=0;
+  document.querySelectorAll('.page').forEach(p=>p.style.setProperty('--fs',fs.value+'px'));
+  let blocks=parse(ta.value);
+  const nm=$('cn').value.trim()||(blocks[0]&&blocks[0].k==='h'?blocks[0].words.join(' '):'');
+  const hasCover=$('cvr').checked&&(nm||img||$('cs').value.trim());
+  if(hasCover){blocks=blocks.filter(b=>b.k!=='h');addCover(nm)}
+  if(!blocks.length&&!hasCover){
+    stage.innerHTML='<div class="empty">टेक्स्ट पेस्ट करते ही यहाँ आपकी किताब दिखेगी।</div>';
+    st.textContent='';setBtns(false);return;
+  }
+  if(blocks.length){newPage();blocks.forEach(place)}
+  fit();
+  scrollTo(0,y);
+  st.textContent=(hasCover?'कवर + ':'')+'कुल '+dev(count)+' पेज तैयार हैं।';
+  setBtns(true);
+}
+
+function fit(){
+  scale=Math.min(1,(Math.min(window.innerWidth,640)-24)/W);
+  stage.querySelectorAll('.sheet').forEach(sh=>{
+    sh.style.width=W*scale+'px';sh.style.height=H*scale+'px';
+    sh.firstChild.style.transform='scale('+scale+')';
+  });
+}
+
+function setBtns(on){
+  $('pdf').hidden=!(on&&DL);$('htm').hidden=!(on&&DL);$('prt').hidden=!(on&&!DL);
+}
+
+let tm;const later=(f,ms)=>{clearTimeout(tm);tm=setTimeout(f,ms)};
+ta.addEventListener('input',()=>later(render,500));
+$('hd').addEventListener('input',()=>later(render,400));
+$('nl').addEventListener('input',()=>later(render,400));
+$('bk').addEventListener('input',()=>later(render,400));
+$('nc').addEventListener('input',()=>{if(!$('nt').dataset.s)$('nt').value=$('nc').value;later(render,100)});
+$('nt').addEventListener('input',()=>{$('nt').dataset.s=1;later(render,100)});
+$('ntr').onclick=()=>{delete $('nt').dataset.s;$('nt').value=$('nc').value;render()};
+fs.addEventListener('input',()=>{$('fv').textContent=fs.value;later(render,150)});
+$('fm').onclick=()=>{fs.value=Math.max(11,+fs.value-1);fs.dispatchEvent(new Event('input'))};
+$('fp').onclick=()=>{fs.value=Math.min(28,+fs.value+1);fs.dispatchEvent(new Event('input'))};
+$('ls').addEventListener('input',()=>{$('lv').textContent=$('ls').value;later(render,150)});
+$('ff').addEventListener('change',async()=>{try{await document.fonts.load('500 17px "'+$('ff').value+'"','अ')}catch(e){}render()});
+$('mg').addEventListener('input',()=>{$('mgv').textContent=$('mg').value;later(render,150)});
+$('bo').addEventListener('change',()=>later(render,100));
+$('cvr').addEventListener('change',render);
+$('cn').addEventListener('input',()=>later(render,400));
+$('cs').addEventListener('input',()=>later(render,400));
+$('cp').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const s=Math.min(1,1200/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);img=c.toDataURL('image/jpeg',.88);$('cx').hidden=false;render()};im.src=r.result};r.readAsDataURL(f)};
+$('cx').onclick=()=>{img='';$('cp').value='';$('cx').hidden=true;render()};
+let sv;window.addEventListener('scroll',()=>{clearTimeout(sv);sv=setTimeout(save,500)},{passive:true});
+$('clr').onclick=function(){if(!this.dataset.a){this.dataset.a=1;this.textContent='पक्का? फिर दबाएँ';setTimeout(()=>{delete this.dataset.a;this.textContent='सब साफ़ करें'},3000);return}wiped=true;try{localStorage.removeItem(KEY)}catch(e){}location.reload()};
+$('mk').onclick=render;
+$('prt').onclick=()=>window.print();
+$('ra').onclick=()=>{for(const k in PO)delete PO[k];for(const k in PM)delete PM[k];render()};
+window.addEventListener('resize',fit);
+
+function title(){
+  const m=ta.value.match(/^\s*Book name\/title\s*[-–—:]\s*(.+)/i);
+  return (m?m[1].trim():'ebook').replace(/[\\/:*?"<>|]/g,'').slice(0,60)||'ebook';
+}
+async function save(name,data){
+  try{await DL.save({filename:name,data});st.textContent='सेव हो गया ✔'}
+  catch(e){st.textContent=e&&e.code==='declined'?'डाउनलोड रद्द किया गया।':'डाउनलोड नहीं हो सका।'}
+}
+
+$('pdf').onclick=async()=>{
+  const btn=$('pdf');btn.disabled=true;
+  const holder=document.createElement('div');holder.style.cssText='position:fixed;left:-99999px;top:0';
+  document.body.append(holder);
+  try{
+    await document.fonts.ready;
+    const pages=[...stage.querySelectorAll('.page')];
+    const doc=new window.jspdf.jsPDF({unit:'px',format:[W,H],orientation:'p',compress:true});
+    for(let i=0;i<pages.length;i++){
+      st.textContent='PDF बन रहा है… '+dev(i+1)+'/'+dev(pages.length);
+      const c=pages[i].cloneNode(true);c.style.transform='none';holder.append(c);
+      const cv=await html2canvas(c,{scale:2,useCORS:true,backgroundColor:'#f4e4bc'});
+      if(i)doc.addPage([W,H],'p');
+      doc.addImage(cv.toDataURL('image/jpeg',.9),'JPEG',0,0,W,H);
+      c.remove();
+    }
+    holder.remove();
+    await save(title()+'.pdf',doc.output('blob'));
+  }catch(e){st.textContent='PDF बनाने में दिक्कत आई।';holder.remove()}
+  btn.disabled=false;
+};
+
+$('htm').onclick=()=>{
+  const css=document.querySelector('style').textContent;
+  const pages=[...stage.querySelectorAll('.page')].map(p=>{const c=p.cloneNode(true);c.style.transform='';return c.outerHTML}).join('');
+  const html='<!doctype html><html lang="hi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+title()+'</title><link href="https://fonts.googleapis.com/css2?family=Hind:wght@500;600;700&family=Mukta:wght@500;600;700&family=Noto+Sans+Devanagari:wght@500;600;700&family=Tiro+Devanagari+Hindi&family=Kalam:wght@400;700&display=swap" rel="stylesheet"><style>'+css+'body{background:#3a2e1f}main{display:flex;flex-direction:column;align-items:center;gap:16px;padding:16px 0}.page{margin:0 auto}</style></head><body><main>'+pages+'</main><script>function z(){var s=Math.min(1,innerWidth/'+(W+24)+');document.querySelectorAll(".page").forEach(function(p){p.style.zoom=s})}z();onresize=z<\/script></body></html>';
+  save(title()+'.html',new Blob([html],{type:'text/html'}));
+};
+
+(async()=>{
+  keepY=load()||null;
+  try{if(window.claude&&claude.use)DL=await claude.use('downloads')}catch(e){DL=null}
+  try{await document.fonts.load('500 17px Hind','अ');await document.fonts.ready}catch(e){}
+  render();
+  if(keepY)scrollTo(0,keepY);
+  keepY=null;
+})();
+</script>
+</body>
+</html>
