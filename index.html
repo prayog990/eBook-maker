@@ -310,7 +310,7 @@ function fit(){
 }
 
 function setBtns(on){
-  $('pdf').hidden=!(on&&DL);$('htm').hidden=!(on&&DL);$('prt').hidden=!(on&&!DL);
+  $('pdf').hidden=!on;$('htm').hidden=!on;$('prt').hidden=true;
 }
 
 let tm;const later=(f,ms)=>{clearTimeout(tm);tm=setTimeout(f,ms)};
@@ -345,6 +345,7 @@ function title(){
   return (m?m[1].trim():'ebook').replace(/[\\/:*?"<>|]/g,'').slice(0,60)||'ebook';
 }
 async function save(name,data){
+  if(!DL){const u=URL.createObjectURL(data),a=document.createElement('a');a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),10000);st.textContent='डाउनलोड शुरू हो गया ✔';return}
   try{await DL.save({filename:name,data});st.textContent='सेव हो गया ✔'}
   catch(e){st.textContent=e&&e.code==='declined'?'डाउनलोड रद्द किया गया।':'डाउनलोड नहीं हो सका।'}
 }
