@@ -120,6 +120,8 @@ input[type=color]{width:56px;height:38px;padding:2px;border:1px solid var(--line
     <button id="bkp">बैकअप सेव करें</button>
     <button id="rst">बैकअप खोलें</button>
     <input id="rf" type="file" accept=".json,application/json" hidden>
+    <button id="lpd">PDF से काम खोलें</button>
+    <input id="pf" type="file" accept=".pdf,application/pdf" hidden>
     <button id="prt" hidden>प्रिंट / PDF सेव</button>
    </div>
    <div id="st" role="status"></div>
@@ -387,6 +389,25 @@ $('rf').onchange=e=>{
   };
   r.readAsText(f);
 };
+$('lpd').onclick=()=>$('pf').click();
+$('pf').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const txt=new TextDecoder('latin1').decode(new Uint8Array(r.result));
+      const m=txt.match(/\/Keywords\s*\(\s*EBOOKDATA:([A-Za-z0-9+\/=]+)\)/);
+      if(!m)throw 0;
+      const s=JSON.parse(decodeURIComponent(escape(atob(m[1]))));
+      if(!s||typeof s.ta!=='string')throw 0;
+      for(const k in PO)delete PO[k];for(const k in PM)delete PM[k];
+      img='';$('cx').hidden=true;delete $('nt').dataset.s;
+      apply(s);render();toast('PDF से काम वापस आ गया ✔');
+    }catch(x){toast('इस PDF में काम का डेटा नहीं मिला। PDF इसी ऐप के नए वर्शन से बनी होनी चाहिए।')}
+    e.target.value='';
+  };
+  r.readAsArrayBuffer(f);
+};
 let sv;window.addEventListener('scroll',()=>{clearTimeout(sv);sv=setTimeout(persistState,500)},{passive:true});
 $('clr').onclick=function(){if(!this.dataset.a){this.dataset.a=1;this.textContent='पक्का? फिर दबाएँ';setTimeout(()=>{delete this.dataset.a;this.textContent='सब साफ़ करें'},3000);return}wiped=true;try{localStorage.removeItem(KEY)}catch(e){}location.reload()};
 
@@ -422,6 +443,7 @@ $('pdf').onclick=async()=>{
         if(a.classList.contains('yu')){let z=11;doc.setFontSize(z);const tw=doc.getTextWidth(a.textContent);if(tw>r.width){z=z*r.width/tw;doc.setFontSize(z)}doc.text(a.textContent,x,y+1,{baseline:'top',renderingMode:'invisible'})}});
       c.remove();
     }
+    try{const j=JSON.stringify(snap());doc.setProperties({keywords:'EBOOKDATA:'+btoa(unescape(encodeURIComponent(j)))})}catch(e){}
     holder.remove();
     await save(title()+'.pdf',doc.output('blob'));
   }catch(e){st.textContent='PDF बनाने में दिक्कत आई।';holder.remove()}
