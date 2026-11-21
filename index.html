@@ -41,7 +41,9 @@ input[type=color]{width:56px;height:38px;padding:2px;border:1px solid var(--line
 .ci{width:100%;height:410px;border:3px double #b08d4c;background-size:cover;background-position:center;flex:none;box-shadow:0 2px 8px rgba(0,0,0,.25)}
 .ct{color:#7a2e1d;font-weight:700;line-height:1.35;max-width:100%;white-space:pre-line}
 .cu{color:#6b5a3e;font-size:19px;font-weight:600}
-.yt{display:inline-block;background:#c4121a;color:#fff!important;text-decoration:none;font-weight:700;font-size:17px;padding:8px 22px;border-radius:999px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.yt{display:inline-block;max-width:100%;text-align:center;background:#c4121a;color:#fff!important;text-decoration:none;font-weight:700;font-size:17px;padding:9px 22px;border-radius:22px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.yt span{display:block}
+.yt .yt2{font-size:11px;font-weight:500;margin-top:3px;word-break:break-all;text-decoration:underline}
 #toast{position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom,0px));background:#222;color:#fff;padding:10px 14px;border-radius:10px;font-size:14px;display:none;z-index:50;word-break:break-all}
 .yr{display:flex;align-items:center;justify-content:center;gap:8px;max-width:100%}
 .yu{color:#7a2e1d;font-size:12px;font-weight:600;word-break:break-all;text-decoration:underline;user-select:text;-webkit-user-select:text}
@@ -89,7 +91,7 @@ input[type=color]{width:56px;height:38px;padding:2px;border:1px solid var(--line
    <input id="cs" type="text">
    <label for="yl">YouTube लिंक (कवर पर बटन बनेगा)</label>
    <input id="yl" type="text" inputmode="url" placeholder="https://youtu.be/...">
-   <label style="display:flex;align-items:center;gap:8px;color:var(--ink);font-weight:600"><input id="ysh" type="checkbox" checked style="width:20px;height:20px;accent-color:var(--acc)"> लिंक का टेक्स्ट भी दिखाएँ (कॉपी के साथ)</label>
+   <label style="display:flex;align-items:center;gap:8px;color:var(--ink);font-weight:600"><input id="ysh" type="checkbox" checked style="width:20px;height:20px;accent-color:var(--acc)"> लिंक बटन पर दिखाएँ (कॉपी बटन के साथ)</label>
    <label for="cp">कवर फोटो</label>
    <div class="row"><input id="cp" type="file" accept="image/*"><button id="cx" hidden>हटाएँ</button></div>
    <label for="fs">फ़ॉन्ट साइज़</label>
@@ -312,8 +314,8 @@ function addCover(nm){
   const s=$('cs').value.trim();
   if(s){const u=document.createElement('div');u.className='cu';u.textContent=s;w.append(u)}
   let yl=$('yl').value.trim();
-  if(yl){if(!/^https?:\/\//i.test(yl))yl='https://'+yl;const a=document.createElement('a');a.className='yt';a.href=yl;a.target='_blank';a.rel='noopener';a.textContent='▶ YouTube पर देखें';a.onclick=e=>{e.preventDefault();openLink(a.href)};w.append(a);
-    if($('ysh').checked){const r=document.createElement('div');r.className='yr';const u=document.createElement('a');u.className='yu';u.href=yl;u.target='_blank';u.rel='noopener';u.textContent=yl;u.onclick=ev=>{ev.preventDefault();openLink(u.href)};const cb=document.createElement('button');cb.className='ycp';cb.textContent='कॉपी';cb.onclick=()=>copyText(yl);r.append(u,cb);w.append(r)}}
+  if(yl){if(!/^https?:\/\//i.test(yl))yl='https://'+yl;const a=document.createElement('a');a.className='yt';a.href=yl;a.target='_blank';a.rel='noopener';const t1=document.createElement('span');t1.textContent='▶ YouTube पर देखें';a.append(t1);if($('ysh').checked){const t2=document.createElement('span');t2.className='yt2';t2.textContent=yl;a.append(t2)}a.onclick=e=>{e.preventDefault();openLink(a.href)};w.append(a);
+    if($('ysh').checked){const r=document.createElement('div');r.className='yr';const cb=document.createElement('button');cb.className='ycp';cb.textContent='लिंक कॉपी करें';cb.onclick=()=>copyText(yl);r.append(cb);w.append(r)}}
   sh.dataset.i=0;sh.append(p);sizeSheet(sh);tgt.append(sh);
 }
 function render(){
@@ -439,8 +441,8 @@ $('pdf').onclick=async()=>{
       const cv=await html2canvas(c,{scale:2,useCORS:true,backgroundColor:'#f4e4bc'});
       if(i)doc.addPage([W,H],'p');
       doc.addImage(cv.toDataURL('image/jpeg',.9),'JPEG',0,0,W,H);
-      c.querySelectorAll('a.yt,a.yu').forEach(a=>{const r=a.getBoundingClientRect(),o=c.getBoundingClientRect(),x=r.left-o.left,y=r.top-o.top;doc.link(x,y,r.width,r.height,{url:a.href});
-        if(a.classList.contains('yu')){let z=11;doc.setFontSize(z);const tw=doc.getTextWidth(a.textContent);if(tw>r.width){z=z*r.width/tw;doc.setFontSize(z)}doc.text(a.textContent,x,y+1,{baseline:'top',renderingMode:'invisible'})}});
+      c.querySelectorAll('a.yt').forEach(a=>{const r=a.getBoundingClientRect(),o=c.getBoundingClientRect(),x=r.left-o.left,y=r.top-o.top;doc.link(x,y,r.width,r.height,{url:a.href});
+        const t2=a.querySelector('.yt2');if(t2){const q=t2.getBoundingClientRect(),qx=q.left-o.left,qy=q.top-o.top;let z=11;doc.setFontSize(z);const tw=doc.getTextWidth(t2.textContent);if(tw>q.width){z=z*q.width/tw;doc.setFontSize(z)}doc.text(t2.textContent,qx,qy+1,{baseline:'top',renderingMode:'invisible'})}});
       c.remove();
     }
     try{const j=JSON.stringify(snap());doc.setProperties({keywords:'EBOOKDATA:'+btoa(unescape(encodeURIComponent(j)))})}catch(e){}
