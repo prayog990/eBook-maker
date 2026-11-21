@@ -42,6 +42,10 @@ input[type=color]{width:56px;height:38px;padding:2px;border:1px solid var(--line
 .ct{color:#7a2e1d;font-weight:700;line-height:1.35;max-width:100%;white-space:pre-line}
 .cu{color:#6b5a3e;font-size:19px;font-weight:600}
 .yt{display:inline-block;background:#c4121a;color:#fff!important;text-decoration:none;font-weight:700;font-size:17px;padding:8px 22px;border-radius:999px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+#toast{position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom,0px));background:#222;color:#fff;padding:10px 14px;border-radius:10px;font-size:14px;display:none;z-index:50;word-break:break-all}
+.yr{display:flex;align-items:center;justify-content:center;gap:8px;max-width:100%}
+.yu{color:#7a2e1d;font-size:12px;font-weight:600;word-break:break-all;text-decoration:underline;user-select:text;-webkit-user-select:text}
+.ycp{flex:none;font-size:12px;padding:2px 10px;border-radius:999px;border:1px solid #7a2e1d;color:#7a2e1d;background:transparent;font-weight:700}
 /* ---- book page ---- */
 .page{--fs:17px;--lh:1.62;--ff:'Hind';--fw:500;--fwn:600;--mx:44px;position:relative;width:520px;height:740px;transform-origin:top left;background:radial-gradient(ellipse at center,#fcf3dc 0%,#f4e4bc 70%,#ecd6a4 100%);border:3px double #b08d4c;color:#2b2118;font-family:var(--ff),'Noto Sans Devanagari',sans-serif;overflow:hidden}
 .page::before{content:"";position:absolute;inset:12px;border:1px solid #c9a96a;pointer-events:none}
@@ -85,6 +89,7 @@ input[type=color]{width:56px;height:38px;padding:2px;border:1px solid var(--line
    <input id="cs" type="text">
    <label for="yl">YouTube लिंक (कवर पर बटन बनेगा)</label>
    <input id="yl" type="text" inputmode="url" placeholder="https://youtu.be/...">
+   <label style="display:flex;align-items:center;gap:8px;color:var(--ink);font-weight:600"><input id="ysh" type="checkbox" checked style="width:20px;height:20px;accent-color:var(--acc)"> लिंक का टेक्स्ट भी दिखाएँ (कॉपी के साथ)</label>
    <label for="cp">कवर फोटो</label>
    <div class="row"><input id="cp" type="file" accept="image/*"><button id="cx" hidden>हटाएँ</button></div>
    <label for="fs">फ़ॉन्ट साइज़</label>
@@ -107,11 +112,14 @@ input[type=color]{width:56px;height:38px;padding:2px;border:1px solid var(--line
    <label for="nt">हरे हिस्से के शीर्षक का रंग</label>
    <div class="row"><input id="nt" type="color" value="#1d6a2b"><button id="ntr">हरे हिस्से जैसा</button></div>
    <div class="btns">
-    <button class="main" id="mk">किताब बनाएँ</button>
-    <button id="pdf" hidden>PDF डाउनलोड</button>
+    
+    <button class="main" id="pdf" hidden>PDF डाउनलोड</button>
     <button id="htm" hidden>HTML ई-बुक</button>
     <button id="ra">पेज-वार बदलाव रीसेट</button>
     <button id="clr">सब साफ़ करें</button>
+    <button id="bkp">बैकअप सेव करें</button>
+    <button id="rst">बैकअप खोलें</button>
+    <input id="rf" type="file" accept=".json,application/json" hidden>
     <button id="prt" hidden>प्रिंट / PDF सेव</button>
    </div>
    <div id="st" role="status"></div>
@@ -119,6 +127,7 @@ input[type=color]{width:56px;height:38px;padding:2px;border:1px solid var(--line
  </div>
  <div id="stage"></div>
 </div>
+<div id="toast" role="status"></div>
 <script>
 const W=520,H=740,PAL=['#6b2d8f','#1c3f94','#a1262b','#0b6a8a','#b35a00','#b0006d','#7a4a12','#4b4b9e'];
 const $=id=>document.getElementById(id), ta=$('ta'), fs=$('fs'), stage=$('stage'), st=$('st');
@@ -181,22 +190,26 @@ function parse(t){
 }
 
 const KEY='ebook-maker-v1';let keepY=null,wiped=false;
-function save(){
+function persistState(){
   if(wiped)return;
   try{
-    const s={ta:ta.value,fs:fs.value,ls:$('ls').value,mg:$('mg').value,bo:$('bo').checked,ff:$('ff').value,hd:$('hd').value,nl:$('nl').value,bk:$('bk').value,nc:$('nc').value,nt:$('nt').value,nts:!!$('nt').dataset.s,cvr:$('cvr').checked,cn:$('cn').value,cs:$('cs').value,yl:$('yl').value,PO,PM,y:keepY!==null?keepY:scrollY};
+    const s={ta:ta.value,fs:fs.value,ls:$('ls').value,mg:$('mg').value,bo:$('bo').checked,ff:$('ff').value,hd:$('hd').value,nl:$('nl').value,bk:$('bk').value,nc:$('nc').value,nt:$('nt').value,nts:!!$('nt').dataset.s,cvr:$('cvr').checked,cn:$('cn').value,cs:$('cs').value,yl:$('yl').value,ysh:$('ysh').checked,PO,PM,y:keepY!==null?keepY:scrollY};
     try{localStorage.setItem(KEY,JSON.stringify({...s,img}))}catch(e){localStorage.setItem(KEY,JSON.stringify(s))}
   }catch(e){}
 }
 function load(){
+  try{return apply(JSON.parse(localStorage.getItem(KEY)||'null'))}catch(e){return 0}
+}
+function snap(){return {v:1,ta:ta.value,fs:fs.value,ls:$('ls').value,mg:$('mg').value,bo:$('bo').checked,ff:$('ff').value,hd:$('hd').value,nl:$('nl').value,bk:$('bk').value,nc:$('nc').value,nt:$('nt').value,nts:!!$('nt').dataset.s,cvr:$('cvr').checked,cn:$('cn').value,cs:$('cs').value,yl:$('yl').value,ysh:$('ysh').checked,PO,PM,img}}
+function apply(s){
   try{
-    const s=JSON.parse(localStorage.getItem(KEY)||'null');if(!s)return 0;
+    if(!s)return 0;
     const set=(id,v)=>{if(v!==undefined&&v!==null)$(id).value=v};
     set('ta',s.ta);set('fs',s.fs);set('fv',null);$('fv').textContent=fs.value;
     set('ls',s.ls);$('lv').textContent=$('ls').value;set('mg',s.mg);$('mgv').textContent=$('mg').value;
     $('bo').checked=!!s.bo;set('ff',s.ff);set('hd',s.hd);set('nl',s.nl);set('bk',s.bk);set('nc',s.nc);set('nt',s.nt);
     if(s.nts)$('nt').dataset.s=1;
-    $('cvr').checked=s.cvr!==false;set('cn',s.cn);set('cs',s.cs);set('yl',s.yl);
+    $('cvr').checked=s.cvr!==false;set('cn',s.cn);set('cs',s.cs);set('yl',s.yl);if(s.ysh===false)$('ysh').checked=false;
     Object.assign(PO,s.PO||{});Object.assign(PM,s.PM||{});
     if(s.img){img=s.img;$('cx').hidden=false}
     return s.y||0;
@@ -274,6 +287,18 @@ function place(b){
   }
 }
 
+let tt;function toast(m){const t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(tt);tt=setTimeout(()=>{t.style.display='none'},7000)}
+function openLink(u){
+  let w=null;try{w=window.open(u,'_blank')}catch(x){}
+  if(w){try{w.opener=null}catch(x){}return}
+  if(window.top===window){location.href=u;return}
+  try{navigator.clipboard.writeText(u)}catch(x){}
+  toast('यहाँ लिंक खुल नहीं सका। लिंक कॉपी किया है, ब्राउज़र या YouTube में पेस्ट करें: '+u);
+}
+async function copyText(t){
+  try{await navigator.clipboard.writeText(t);toast('लिंक कॉपी हो गया ✔')}
+  catch(e){const x=document.createElement('textarea');x.value=t;document.body.append(x);x.select();let ok=false;try{ok=document.execCommand('copy')}catch(z){}x.remove();toast(ok?'लिंक कॉपी हो गया ✔':'कॉपी नहीं हो सका: '+t)}
+}
 function addCover(nm){
   const sh=document.createElement('div');sh.className='sheet';
   const p=document.createElement('div');p.className='page cover';
@@ -285,11 +310,12 @@ function addCover(nm){
   const s=$('cs').value.trim();
   if(s){const u=document.createElement('div');u.className='cu';u.textContent=s;w.append(u)}
   let yl=$('yl').value.trim();
-  if(yl){if(!/^https?:\/\//i.test(yl))yl='https://'+yl;const a=document.createElement('a');a.className='yt';a.href=yl;a.target='_blank';a.rel='noopener';a.textContent='▶ YouTube पर देखें';w.append(a)}
+  if(yl){if(!/^https?:\/\//i.test(yl))yl='https://'+yl;const a=document.createElement('a');a.className='yt';a.href=yl;a.target='_blank';a.rel='noopener';a.textContent='▶ YouTube पर देखें';a.onclick=e=>{e.preventDefault();openLink(a.href)};w.append(a);
+    if($('ysh').checked){const r=document.createElement('div');r.className='yr';const u=document.createElement('a');u.className='yu';u.href=yl;u.target='_blank';u.rel='noopener';u.textContent=yl;u.onclick=ev=>{ev.preventDefault();openLink(u.href)};const cb=document.createElement('button');cb.className='ycp';cb.textContent='कॉपी';cb.onclick=()=>copyText(yl);r.append(u,cb);w.append(r)}}
   sh.dataset.i=0;sh.append(p);sizeSheet(sh);tgt.append(sh);
 }
 function render(){
-  save();calcScale();count=0;
+  persistState();calcScale();count=0;
   const hold=document.createElement('div');hold.style.cssText='position:fixed;left:-99999px;top:0;width:640px;visibility:hidden';
   document.body.append(hold);tgt=hold;
   let aIdx=anchorIdx,aTop=null;anchorIdx=null;
@@ -342,11 +368,28 @@ $('cvr').addEventListener('change',render);
 $('cn').addEventListener('input',()=>later(render,400));
 $('cs').addEventListener('input',()=>later(render,400));
 $('yl').addEventListener('input',()=>later(render,500));
+$('ysh').addEventListener('change',render);
 $('cp').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const s=Math.min(1,1200/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);img=c.toDataURL('image/jpeg',.88);$('cx').hidden=false;render()};im.src=r.result};r.readAsDataURL(f)};
 $('cx').onclick=()=>{img='';$('cp').value='';$('cx').hidden=true;render()};
-let sv;window.addEventListener('scroll',()=>{clearTimeout(sv);sv=setTimeout(save,500)},{passive:true});
+$('bkp').onclick=()=>save(title()+'-backup.json',new Blob([JSON.stringify(snap())],{type:'application/json'}));
+$('rst').onclick=()=>$('rf').click();
+$('rf').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const s=JSON.parse(r.result);if(!s||typeof s.ta!=='string')throw 0;
+      for(const k in PO)delete PO[k];for(const k in PM)delete PM[k];
+      img='';$('cx').hidden=true;delete $('nt').dataset.s;
+      apply(s);render();toast('बैकअप वापस आ गया ✔');
+    }catch(x){toast('यह बैकअप फ़ाइल सही नहीं लगती।')}
+    e.target.value='';
+  };
+  r.readAsText(f);
+};
+let sv;window.addEventListener('scroll',()=>{clearTimeout(sv);sv=setTimeout(persistState,500)},{passive:true});
 $('clr').onclick=function(){if(!this.dataset.a){this.dataset.a=1;this.textContent='पक्का? फिर दबाएँ';setTimeout(()=>{delete this.dataset.a;this.textContent='सब साफ़ करें'},3000);return}wiped=true;try{localStorage.removeItem(KEY)}catch(e){}location.reload()};
-$('mk').onclick=render;
+
 $('prt').onclick=()=>window.print();
 $('ra').onclick=()=>{for(const k in PO)delete PO[k];for(const k in PM)delete PM[k];render()};
 window.addEventListener('resize',fit);
@@ -371,11 +414,12 @@ $('pdf').onclick=async()=>{
     const doc=new window.jspdf.jsPDF({unit:'px',format:[W,H],orientation:'p',compress:true});
     for(let i=0;i<pages.length;i++){
       st.textContent='PDF बन रहा है… '+dev(i+1)+'/'+dev(pages.length);
-      const c=pages[i].cloneNode(true);c.style.transform='none';holder.append(c);
+      const c=pages[i].cloneNode(true);c.style.transform='none';c.querySelectorAll('.ycp').forEach(x=>x.remove());holder.append(c);
       const cv=await html2canvas(c,{scale:2,useCORS:true,backgroundColor:'#f4e4bc'});
       if(i)doc.addPage([W,H],'p');
       doc.addImage(cv.toDataURL('image/jpeg',.9),'JPEG',0,0,W,H);
-      c.querySelectorAll('a.yt').forEach(a=>{const r=a.getBoundingClientRect(),o=c.getBoundingClientRect();doc.link(r.left-o.left,r.top-o.top,r.width,r.height,{url:a.href})});
+      c.querySelectorAll('a.yt,a.yu').forEach(a=>{const r=a.getBoundingClientRect(),o=c.getBoundingClientRect(),x=r.left-o.left,y=r.top-o.top;doc.link(x,y,r.width,r.height,{url:a.href});
+        if(a.classList.contains('yu')){let z=11;doc.setFontSize(z);const tw=doc.getTextWidth(a.textContent);if(tw>r.width){z=z*r.width/tw;doc.setFontSize(z)}doc.text(a.textContent,x,y+1,{baseline:'top',renderingMode:'invisible'})}});
       c.remove();
     }
     holder.remove();
@@ -386,12 +430,13 @@ $('pdf').onclick=async()=>{
 
 $('htm').onclick=()=>{
   const css=document.querySelector('style').textContent;
-  const pages=[...stage.querySelectorAll('.page')].map(p=>{const c=p.cloneNode(true);c.style.transform='';return c.outerHTML}).join('');
+  const pages=[...stage.querySelectorAll('.page')].map(p=>{const c=p.cloneNode(true);c.style.transform='';c.querySelectorAll('.ycp').forEach(x=>x.remove());return c.outerHTML}).join('');
   const html='<!doctype html><html lang="hi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+title()+'</title><link href="https://fonts.googleapis.com/css2?family=Hind:wght@500;600;700&family=Mukta:wght@500;600;700&family=Noto+Sans+Devanagari:wght@500;600;700&family=Tiro+Devanagari+Hindi&family=Kalam:wght@400;700&display=swap" rel="stylesheet"><style>'+css+'body{background:#3a2e1f}main{display:flex;flex-direction:column;align-items:center;gap:16px;padding:16px 0}.page{margin:0 auto}</style></head><body><main>'+pages+'</main><script>function z(){var s=Math.min(1,innerWidth/'+(W+24)+');document.querySelectorAll(".page").forEach(function(p){p.style.zoom=s})}z();onresize=z<\/script></body></html>';
   save(title()+'.html',new Blob([html],{type:'text/html'}));
 };
 
 (async()=>{
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
   keepY=load()||null;
   try{if(window.claude&&claude.use)DL=await claude.use('downloads')}catch(e){DL=null}
   try{await document.fonts.load('500 17px Hind','अ');await document.fonts.ready}catch(e){}
